@@ -5,8 +5,10 @@ using _01_PrimoEsempio.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Port=3306;Database=cinemaAI;User=root;Password=root;";
+var baseConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=localhost;Port=3306;Database=cinemaAI;User=root;";
+var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "root";
+var connectionString = $"{baseConnection}Password={password};";
 
 builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
