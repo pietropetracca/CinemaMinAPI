@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using _01_PrimoEsempio.Data;
 using _01_PrimoEsempio.Models;
 using _01_PrimoEsempio.Services;
@@ -10,6 +11,7 @@ Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Registra DbContext - la factory dei test lo sostituirà con InMemory
 var baseConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=localhost;Port=3306;Database=cinemaAI;User=root;";
 var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "root";
@@ -32,7 +34,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    
+
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
     db.Database.EnsureCreated();
@@ -86,3 +88,5 @@ public static class SeedData
         db.SaveChanges();
     }
 }
+
+public partial class Program { }
