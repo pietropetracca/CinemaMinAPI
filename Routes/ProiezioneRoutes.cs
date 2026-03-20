@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using _01_PrimoEsempio.Data;
-using _01_PrimoEsempio.Models;
 using _01_PrimoEsempio.DTOs.Proiezione;
+using _01_PrimoEsempio.Services.Interfaces;
 
 public static class ProiezioneRoutes
 {
@@ -9,129 +7,49 @@ public static class ProiezioneRoutes
     {
         var group = app.MapGroup("/proiezioni");
 
-        group.MapGet("/", async (int? filmId, int? salaId, DateTime? da, DateTime? a, CinemaDbContext db) =>
+        group.MapGet("/", async (int? filmId, int? salaId, DateTime? da, DateTime? a, IProiezioneService service) =>
         {
-            var query = db.Proiezioni.Include(p => p.Film).Include(p => p.Sala).AsQueryable();
-
-            if (filmId.HasValue)
-                query = query.Where(p => p.FilmId == filmId.Value);
-            if (salaId.HasValue)
-                query = query.Where(p => p.SalaId == salaId.Value);
-            if (da.HasValue)
-                query = query.Where(p => p.DataOra >= da.Value);
-            if (a.HasValue)
-                query = query.Where(p => p.DataOra <= a.Value);
-
-            var proiezioni = await query.ToListAsync();
-            return Results.Ok(proiezioni.Select(p => new ProiezioneReadDto
-            {
-                Id = p.Id,
-                DataOra = p.DataOra,
-                Prezzo = p.Prezzo,
-                FilmId = p.FilmId,
-                FilmTitolo = p.Film.Titolo,
-                SalaId = p.SalaId,
-                SalaNome = p.Sala.Nome,
-                PostiDisponibili = p.Sala.Capienza
-            }));
+            var proiezioni = await service.GetAllAsync(filmId, salaId, da, a);
+            return Results.Ok(proiezioni);
         });
 
-        group.MapGet("/{id}", async (int id, CinemaDbContext db) =>
+        group.MapGet("/{id}", async (int id, IProiezioneService service) =>
         {
-            var proiezione = await db.Proiezioni.Include(p => p.Film).Include(p => p.Sala).FirstOrDefaultAsync(p => p.Id == id);
+            var proiezione = await service.GetByIdAsync(id);
             if (proiezione is null)
                 return Results.NotFound(new { messaggio = $"Proiezione con id {id} non trovata" });
 
-            return Results.Ok(new ProiezioneReadDto
-            {
-                Id = proiezione.Id,
-                DataOra = proiezione.DataOra,
-                Prezzo = proiezione.Prezzo,
-                FilmId = proiezione.FilmId,
-                FilmTitolo = proiezione.Film.Titolo,
-                SalaId = proiezione.SalaId,
-                SalaNome = proiezione.Sala.Nome,
-                PostiDisponibili = proiezione.Sala.Capienza
-            });
+            return Results.Ok(proiezione);
         });
 
-        group.MapPost("/", async (ProiezioneCreateDto dto, CinemaDbContext db) =>
+        group.MapPost("/", async (ProiezioneCreateDto dto, IProiezioneService service) =>
         {
-            var proiezione = new Proiezione
-            {
-                DataOra = dto.DataOra,
-                Prezzo = dto.Prezzo,
-                FilmId = dto.FilmId,
-                SalaId = dto.SalaId
-            };
-            db.Proiezioni.Add(proiezione);
-            await db.SaveChangesAsync();
-
-            var film = await db.Film.FindAsync(proiezione.FilmId);
-            var sala = await db.Sale.FindAsync(proiezione.SalaId);
-
-            return Results.Created($"/proiezioni/{proiezione.Id}", new ProiezioneReadDto
-            {
-                Id = proiezione.Id,
-                DataOra = proiezione.DataOra,
-                Prezzo = proiezione.Prezzo,
-                FilmId = proiezione.FilmId,
-                FilmTitolo = film!.Titolo,
-                SalaId = proiezione.SalaId,
-                SalaNome = sala!.Nome,
-                PostiDisponibili = sala.Capienza
-            });
+            var proiezione = await service.CreateAsync(dto);
+            return Results.Created($"/proiezioni/{proiezione.Id}", proiezione);
         });
 
-        group.MapPut("/{id}", async (int id, ProiezioneUpdateDto dto, CinemaDbContext db) =>
+        group.MapPut("/{id}", async (int id, ProiezioneUpdateDto dto, IProiezioneService service) =>
         {
-            var proiezione = await db.Proiezioni.FindAsync(id);
-            if (proiezione is null)
+            var updated = await service.UpdateAsync(id, dto);
+            if (!updated)
                 return Results.NotFound(new { messaggio = $"Proiezione con id {id} non trovata" });
 
-            proiezione.DataOra = dto.DataOra;
-            proiezione.Prezzo = dto.Prezzo;
-            proiezione.FilmId = dto.FilmId;
-            proiezione.SalaId = dto.SalaId;
-
-            await db.SaveChangesAsync();
             return Results.NoContent();
         });
 
-        group.MapDelete("/{id}", async (int id, CinemaDbContext db) =>
+        group.MapDelete("/{id}", async (int id, IProiezioneService service) =>
         {
-            var proiezione = await db.Proiezioni.FindAsync(id);
-            if (proiezione is null)
+            var deleted = await service.DeleteAsync(id);
+            if (!deleted)
                 return Results.NotFound(new { messaggio = $"Proiezione con id {id} non trovata" });
 
-            db.Proiezioni.Remove(proiezione);
-            await db.SaveChangesAsync();
             return Results.NoContent();
         });
 
-        group.MapGet("/settimana", async (CinemaDbContext db) =>
+        group.MapGet("/settimana", async (IProiezioneService service) =>
         {
-            var oggi = DateTime.Today;
-            var inizioSettimana = oggi.AddDays(-(int)oggi.DayOfWeek);
-            var fineSettimana = inizioSettimana.AddDays(7);
-
-            var proiezioni = await db.Proiezioni
-                .Include(p => p.Film)
-                .Include(p => p.Sala)
-                .Where(p => p.DataOra >= inizioSettimana && p.DataOra < fineSettimana)
-                .ToListAsync();
-
-            return Results.Ok(proiezioni.Select(p => new ProiezioneReadDto
-            {
-                Id = p.Id,
-                DataOra = p.DataOra,
-                Prezzo = p.Prezzo,
-                FilmId = p.FilmId,
-                FilmTitolo = p.Film.Titolo,
-                SalaId = p.SalaId,
-                SalaNome = p.Sala.Nome,
-                PostiDisponibili = p.Sala.Capienza
-            }));
+            var proiezioni = await service.GetSettimanaAsync();
+            return Results.Ok(proiezioni);
         });
     }
 }

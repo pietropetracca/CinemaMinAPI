@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using _01_PrimoEsempio.Data;
 using _01_PrimoEsempio.Models;
+using _01_PrimoEsempio.Services;
+using _01_PrimoEsempio.Services.Interfaces;
 using DotNetEnv;
 
 Env.Load();
@@ -15,6 +17,11 @@ var connectionString = $"{baseConnection}Password={password};";
 
 builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+builder.Services.AddScoped<IRegistaService, RegistaService>();
+builder.Services.AddScoped<IFilmService, FilmService>();
+builder.Services.AddScoped<ISalaService, SalaService>();
+builder.Services.AddScoped<IProiezioneService, ProiezioneService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

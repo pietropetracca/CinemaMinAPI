@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using _01_PrimoEsempio.Data;
-using _01_PrimoEsempio.Models;
 using _01_PrimoEsempio.DTOs.Regista;
+using _01_PrimoEsempio.Services.Interfaces;
 
 public static class RegistaRoutes
 {
@@ -9,75 +7,42 @@ public static class RegistaRoutes
     {
         var group = app.MapGroup("/registi");
 
-        group.MapGet("/", async (CinemaDbContext db) =>
+        group.MapGet("/", async (IRegistaService service) =>
         {
-            var registi = await db.Registi.ToListAsync();
-            return Results.Ok(registi.Select(r => new RegistaReadDto
-            {
-                Id = r.Id,
-                Nome = r.Nome,
-                Cognome = r.Cognome,
-                Nazionalita = r.Nazionalita
-            }));
+            var registi = await service.GetAllAsync();
+            return Results.Ok(registi);
         });
 
-        group.MapGet("/{id}", async (int id, CinemaDbContext db) =>
+        group.MapGet("/{id}", async (int id, IRegistaService service) =>
         {
-            var regista = await db.Registi.FindAsync(id);
+            var regista = await service.GetByIdAsync(id);
             if (regista is null)
                 return Results.NotFound(new { messaggio = $"Regista con id {id} non trovato" });
 
-            return Results.Ok(new RegistaReadDto
-            {
-                Id = regista.Id,
-                Nome = regista.Nome,
-                Cognome = regista.Cognome,
-                Nazionalita = regista.Nazionalita
-            });
+            return Results.Ok(regista);
         });
 
-        group.MapPost("/", async (RegistaCreateDto dto, CinemaDbContext db) =>
+        group.MapPost("/", async (RegistaCreateDto dto, IRegistaService service) =>
         {
-            var regista = new Regista
-            {
-                Nome = dto.Nome,
-                Cognome = dto.Cognome,
-                Nazionalita = dto.Nazionalita
-            };
-            db.Registi.Add(regista);
-            await db.SaveChangesAsync();
-
-            return Results.Created($"/registi/{regista.Id}", new RegistaReadDto
-            {
-                Id = regista.Id,
-                Nome = regista.Nome,
-                Cognome = regista.Cognome,
-                Nazionalita = regista.Nazionalita
-            });
+            var regista = await service.CreateAsync(dto);
+            return Results.Created($"/registi/{regista.Id}", regista);
         });
 
-        group.MapPut("/{id}", async (int id, RegistaUpdateDto dto, CinemaDbContext db) =>
+        group.MapPut("/{id}", async (int id, RegistaUpdateDto dto, IRegistaService service) =>
         {
-            var regista = await db.Registi.FindAsync(id);
-            if (regista is null)
+            var updated = await service.UpdateAsync(id, dto);
+            if (!updated)
                 return Results.NotFound(new { messaggio = $"Regista con id {id} non trovato" });
 
-            regista.Nome = dto.Nome;
-            regista.Cognome = dto.Cognome;
-            regista.Nazionalita = dto.Nazionalita;
-
-            await db.SaveChangesAsync();
             return Results.NoContent();
         });
 
-        group.MapDelete("/{id}", async (int id, CinemaDbContext db) =>
+        group.MapDelete("/{id}", async (int id, IRegistaService service) =>
         {
-            var regista = await db.Registi.FindAsync(id);
-            if (regista is null)
+            var deleted = await service.DeleteAsync(id);
+            if (!deleted)
                 return Results.NotFound(new { messaggio = $"Regista con id {id} non trovato" });
 
-            db.Registi.Remove(regista);
-            await db.SaveChangesAsync();
             return Results.NoContent();
         });
     }
