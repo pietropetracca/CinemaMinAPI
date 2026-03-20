@@ -142,6 +142,16 @@ Realizzare backend **ASP.NET Core MinAPI** per cinema multisala con **MariaDB + 
 │       ├── ProiezioneCreateDto.cs
 │       ├── ProiezioneUpdateDto.cs
 │       └── ProiezioneReadDto.cs
+├── Services/
+│   ├── Interfaces/
+│   │   ├── IRegistaService.cs
+│   │   ├── IFilmService.cs
+│   │   ├── ISalaService.cs
+│   │   └── IProiezioneService.cs
+│   ├── RegistaService.cs
+│   ├── FilmService.cs
+│   ├── SalaService.cs
+│   └── ProiezioneService.cs
 ├── Routes/
 │   ├── RegistaRoutes.cs
 │   ├── FilmRoutes.cs
@@ -161,6 +171,7 @@ Realizzare backend **ASP.NET Core MinAPI** per cinema multisala con **MariaDB + 
 
 ### Step 4: Configurazione
 - DbContext con fluent config (relazioni, cascade, required)
+- Registrare Service Layer in DI (AddScoped)
 - Registrare MinAPI in file route dedicati
 - Uniformare risposte (200/201/204/400/404)
 - Configurare Swagger e seed Development
