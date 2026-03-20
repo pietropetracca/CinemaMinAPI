@@ -15,10 +15,10 @@
 - Swagger abilitato
 
 ## In Corso
-- (nessuno)
+- [ ] Test funzionali (Unit + Integration con InMemory)
 
 ## Da Fare
-- [ ] Test funzionali
+- [ ] Progetto test (01_PrimoEsempio.Tests)
 
 ## Log Sessioni
 *Sessione 17/03/2026 - Pianificazione iniziale completata*
