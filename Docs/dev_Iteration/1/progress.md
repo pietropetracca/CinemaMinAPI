@@ -15,11 +15,10 @@
 - Swagger abilitato
 
 ## In Corso
-- [ ] Service Layer (Interfaces + Implementation)
+- [ ] Test funzionali (Unit + Integration con InMemory)
 
 ## Da Fare
-- [ ] Refactor Routes per usare Service Layer
-- [ ] Test funzionali (Unit + Integration con InMemory)
+- [ ] Progetto test (01_PrimoEsempio.Tests)
 
 ## Log Sessioni
 *Sessione 17/03/2026 - Pianificazione iniziale completata*
